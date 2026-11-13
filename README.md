@@ -52,8 +52,8 @@
 
 ```bash
 # 1. リポジトリをクローン
-git clone https://github.com/keima-tech/plamo-translate.git
-cd plamo-translate
+git clone https://github.com/keima-tech/plamo-local-translate.git
+cd plamo-local-translate
 
 # 2. Ollama を起動し、モデルを取得
 ollama pull hf.co/pfnet/plamo-3-translate-2b-GGUF:Q4_K_M

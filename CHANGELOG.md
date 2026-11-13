@@ -5,6 +5,7 @@ PLaMo Local Translate の変更履歴。形式は [Keep a Changelog](https://kee
 ## [Unreleased]
 
 ### Changed
+- リポジトリ名を `plamo-translate` から `plamo-local-translate` に変更（Forgejo/GitHub とも旧名はリダイレクト。PFN 公式 CLI の PyPI 名との混同回避）
 - アプリ表示名を「PLaMo翻訳」から「PLaMo Local Translate」に変更（PFN 公式サービス「PLaMo™翻訳」との同名を回避）。ヘッダーバッジを「Built with PLaMo 3 Translate」に更新
 - README・UI フッターに「本プロジェクトは非公式で Preferred Networks と関係がない」旨の免責事項を追加
 

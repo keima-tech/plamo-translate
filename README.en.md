@@ -55,8 +55,8 @@ Ollama is the **recommended** backend; for llama.cpp / LM Studio see [Backend op
 
 ```bash
 # 1. Clone this repository
-git clone https://github.com/keima-tech/plamo-translate.git
-cd plamo-translate
+git clone https://github.com/keima-tech/plamo-local-translate.git
+cd plamo-local-translate
 
 # 2. Get the model (Ollama must be running)
 ollama pull hf.co/pfnet/plamo-3-translate-2b-GGUF:Q4_K_M
