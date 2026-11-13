@@ -50,13 +50,17 @@
 前提は **Ollama（推奨）**。llama.cpp / LM Studio を使う場合は[バックエンドの選択肢](#バックエンドの選択肢)を参照してください。
 
 ```bash
-# 1. Ollama を起動し、モデルを取得
+# 1. リポジトリをクローン
+git clone https://github.com/keima-tech/plamo-translate.git
+cd plamo-translate
+
+# 2. Ollama を起動し、モデルを取得
 ollama pull hf.co/pfnet/plamo-3-translate-2b-GGUF:Q4_K_M
 
-# 2.（任意）設定: .env をコピーして編集、または起動後に WebUI の ⚙ から
+# 3.（任意）設定: .env をコピーして編集、または起動後に WebUI の ⚙ から
 cp .env.example .env
 
-# 3. 起動
+# 4. 起動
 docker compose up -d --build
 # → http://127.0.0.1:9130/
 ```

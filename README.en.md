@@ -53,14 +53,18 @@ The translation model, PLaMo 3 Translate, ships in four sizes (0.8B / 2B / 8B / 
 Ollama is the **recommended** backend; for llama.cpp / LM Studio see [Backend options](#backend-options).
 
 ```bash
-# 1. Get the model (Ollama must be running)
+# 1. Clone this repository
+git clone https://github.com/keima-tech/plamo-translate.git
+cd plamo-translate
+
+# 2. Get the model (Ollama must be running)
 ollama pull hf.co/pfnet/plamo-3-translate-2b-GGUF:Q4_K_M
 # 8B / 0.8B variants are auto-detected too
 
-# 2. Optional: configure via .env (or use the ⚙ dialog in the WebUI after start)
+# 3. Optional: configure via .env (or use the ⚙ dialog in the WebUI after start)
 cp .env.example .env
 
-# 3. Run
+# 4. Run
 docker compose up -d --build
 # open http://127.0.0.1:9130/
 ```
