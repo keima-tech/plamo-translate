@@ -16,7 +16,7 @@ Its main focus is **layout-preserving document translation with a DeepL-style UI
 | Glossary | Multiple named glossaries, honorific/plain style control for Japanese output, language swap |
 | Endpoint settings (⚙) | Change backend URL / API key / model from the WebUI — stored server-side in `data/config.json`, applied immediately without restart. Works with Ollama, llama.cpp (`llama-server`), LM Studio and remote OpenAI-compatible PLaMo hosting APIs |
 | UX | Light/dark theme, mobile single-column, progress bars, in-session translation history |
-| Lightweight | GGUF Q4_K_M weights are ~0.57 GB (0.8B) / ~1.8 GB (2B) — no dedicated GPU needed, runs comfortably on a normal laptop (see [Lightweight](#lightweight)) |
+| Lightweight | GGUF Q4_K_M weights are ~0.57 GB (0.8B) / ~1.8 GB (2B) — no dedicated GPU needed, runs comfortably on a normal laptop (see [Lightweight](#lightweight--runs-on-a-normal-laptop)) |
 
 ## Screenshots
 
@@ -38,13 +38,12 @@ The two Office screenshots show a real Japanese PowerPoint (with a table) transl
 |---|
 | ![Settings](docs/screenshots/07-settings-dialog.png) |
 
-## Lightweight
+## Lightweight — runs on a normal laptop
 
 The translation model, PLaMo 3 Translate, ships in four sizes (0.8B / 2B / 8B / 31B), and PFN officially states that the small models "run at high speed on smartphones, laptops and wearable devices with no network connection at all, delivering translations instantly" and that "high-quality translations are available at hand even without a large compute environment" ([official press release](https://www.preferred.jp/ja/news/pr20261105/); in PFN's comparative evaluation even the smallest model outscores existing translation-specialised LLMs).
 
 - **Actual GGUF Q4_K_M file sizes (from Hugging Face)**: 0.8B ≈ 0.57 GB, 2B ≈ 1.8 GB. No dedicated GPU is required — on a recent laptop (CPU only, ~8 GB RAM) the 0.8B and 2B models are realistic choices
 - **Reference: measured on our AMD Strix Halo machine (not a laptop)**: 0.8B ≈ 255 tok/s, 8B ≈ 26 tok/s (2B in between)
-- **Reference: third-party personal benchmark (desktop CPU only, Core Ultra 9 285K)**: 0.8B ≈ 112 tok/s at ~685 MB RAM ([write-up](https://note.com/happy_hound3166/n/nf8ac7bd865f5))
 
 > We have not benchmarked on a laptop ourselves; every number above is labelled with its source. The default model is 2B (quality/speed balance); switch to 0.8B in ⚙ for the lightest footprint.
 
