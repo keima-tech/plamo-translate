@@ -1,6 +1,8 @@
-# PLaMo Translate
+# PLaMo Local Translate
 
 [日本語](README.md) | [English](README.en.md)
+
+> ⚠️ 本プロジェクトは**非公式**の個人開発プロジェクトで、株式会社Preferred Networks とは一切関係ありません。PLaMo / PLaMo 3 Translate は Preferred Networks の名称（商標）です。
 
 **[PLaMo 3 Translate](https://huggingface.co/pfnet/plamo-3-translate-2b-GGUF) + Ollama で動く、自分のマシンに自分で入れてローカル完結で使う翻訳サービス。**（llama.cpp / LM Studio も可 → [バックエンドの選択肢](#バックエンドの選択肢)）
 主眼は **DeepL 文書翻訳風の「レイアウト保持翻訳」** — Word / PowerPoint / Excel / PDF / Markdown / HTML を書式そのまま翻訳し、翻訳前後の見た目プレビューや原文⇄訳文の対照表示ができます。**データは、自分でリモート API を指定しない限り、あなたのマシンから一歩も出ません。**

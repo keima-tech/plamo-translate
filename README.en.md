@@ -1,6 +1,8 @@
-# PLaMo Translate
+# PLaMo Local Translate
 
 [日本語](README.md) | [English](README.en.md)
+
+> ⚠️ This is an **unofficial** community project and is not affiliated with Preferred Networks, Inc. PLaMo / PLaMo 3 Translate are names (trademarks) of Preferred Networks.
 
 A **translation service you install on your own machine and run fully locally**, built on [PLaMo 3 Translate](https://huggingface.co/pfnet/plamo-3-translate-2b-GGUF) (Preferred Networks) + Ollama (llama.cpp and LM Studio also work — see [Backend options](#backend-options)).
 Its main focus is **layout-preserving document translation with a DeepL-style UI**: translate Office / PDF / Markdown / HTML documents while keeping the original formatting, with side-by-side original ⇄ translation previews. **No data ever leaves your machine unless you point it at a remote API yourself.**

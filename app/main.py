@@ -22,7 +22,7 @@ OUT_DIR = DATA_DIR / "out"
 MAX_CHUNK = 2600  # 1チャンクの最大文字数（num_ctx 16384 に対して安全側）
 NUM_CTX = 16384
 
-app = FastAPI(title="PLaMo Translate")
+app = FastAPI(title="PLaMo Local Translate")
 
 STATIC_DIR = Path(__file__).parent / "static"
 

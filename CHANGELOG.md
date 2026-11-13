@@ -1,6 +1,12 @@
 # CHANGELOG
 
-PLaMo翻訳 の変更履歴。形式は [Keep a Changelog](https://keepachangelog.com/ja/1.1.0/)、バージョン管理は [Semantic Versioning](https://semver.org/lang/ja/) に準拠します。
+PLaMo Local Translate の変更履歴。形式は [Keep a Changelog](https://keepachangelog.com/ja/1.1.0/)、バージョン管理は [Semantic Versioning](https://semver.org/lang/ja/) に準拠します。
+
+## [Unreleased]
+
+### Changed
+- アプリ表示名を「PLaMo翻訳」から「PLaMo Local Translate」に変更（PFN 公式サービス「PLaMo™翻訳」との同名を回避）。ヘッダーバッジを「Built with PLaMo 3 Translate」に更新
+- README・UI フッターに「本プロジェクトは非公式で Preferred Networks と関係がない」旨の免責事項を追加
 
 ## [1.0.0] - 2026-11-13
 
