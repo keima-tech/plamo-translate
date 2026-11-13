@@ -1,0 +1,19 @@
+services:
+  plamo-translate:
+    build: .
+    container_name: plamo-translate
+    restart: unless-stopped
+    # host ネットワーク: ollama(127.0.0.1:11434) と https-proxy からのアクセス用。
+    # uvicorn は 127.0.0.1:9130 bind のため、LAN からは https-proxy 経由でのみ到達可能。
+    network_mode: host
+    # .env があれば読み込む（無くても可）。WebUI の⚙設定（data/config.json）が
+    # これらの環境変数より優先されます。
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      # OLLAMA_URL / PORT / DATA_DIR / PDF_TIMEOUT_SECS は .env（またはコード内既定値）から。
+      # ここにハードコードすると env_file より優先され .env が無効化されるため置かない。
+      XDG_CACHE_HOME: /data/cache
+    volumes:
+      - ./data:/data

@@ -1,0 +1,14 @@
+# runtime data (glossaries, config.json with API key, translation outputs)
+data/
+.env
+.env.*
+!.env.example
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+.venv*/
+venv/
+*.tmp
+.DS_Store
+node_modules/

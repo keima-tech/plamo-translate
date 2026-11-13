@@ -1,0 +1,1061 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2064%2064%27%3E%3Crect%20width%3D%2764%27%20height%3D%2764%27%20rx%3D%2714%27%20fill%3D%27%234f46e5%27%2F%3E%3Ctext%20x%3D%2732%27%20y%3D%2731%27%20font-family%3D%27sans-serif%27%20font-size%3D%2726%27%20font-weight%3D%27700%27%20fill%3D%27%23ffffff%27%20text-anchor%3D%27middle%27%3E%E6%96%87%3C%2Ftext%3E%3Ctext%20x%3D%2732%27%20y%3D%2756%27%20font-family%3D%27sans-serif%27%20font-size%3D%2722%27%20font-weight%3D%27700%27%20fill%3D%27%23c7d2fe%27%20text-anchor%3D%27middle%27%3EA%3C%2Ftext%3E%3C%2Fsvg%3E">
+<title>PLaMo翻訳</title>
+<style>
+:root{
+  --bg:#f4f5f7; --card:#fff; --ink:#1c1e21; --sub:#6b7280; --line:#e2e5ea;
+  --acc:#4f46e5; --acc-ink:#fff; --ok:#15803d; --err:#dc2626; --chip:#eef0ff;
+  --src-tint:#eef4ff; --tgt-tint:#f4f0ff;
+  --hl-bg:#fef3c7; --hl-border:#f59e0b;
+}
+[data-theme=dark]{ --bg:#16181d; --card:#1f2229; --ink:#e6e8ec; --sub:#9aa1ad; --line:#2e323b;
+         --acc:#7c74ff; --chip:#2a2d40; --src-tint:#1b2130; --tgt-tint:#221e30;
+         --hl-bg:#4a3b19; --hl-border:#d97706; }
+*{box-sizing:border-box}
+body{margin:0;font-family:system-ui,-apple-system,"Segoe UI","Noto Sans JP",sans-serif;background:var(--bg);color:var(--ink);min-height:100vh}
+header{display:flex;align-items:center;gap:.6rem;padding:.9rem 1.2rem;background:var(--card);border-bottom:1px solid var(--line)}
+header h1{font-size:1.05rem;margin:0;font-weight:700}
+#themeBtn,#cfgBtn{border:1px solid var(--line);background:var(--bg);border-radius:8px;padding:.25rem .55rem;font-size:.95rem;line-height:1;cursor:pointer}
+#cfgBtn{margin-left:auto}
+#themeBtn{margin-left:0}
+header .badge{font-size:.7rem;color:var(--sub);background:var(--chip);padding:.15rem .5rem;border-radius:99px}
+main{max-width:1100px;margin:1.2rem auto;padding:0 1rem}
+.bar{display:flex;flex-wrap:wrap;gap:.8rem;align-items:center;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:.7rem .9rem;margin-bottom:.9rem}
+.bar label{display:inline-flex;align-items:center;gap:.5rem;font-size:.8rem;color:var(--sub);white-space:nowrap}
+.f-lang{display:inline-flex;align-items:center;gap:.6rem}
+#model{max-width:340px;min-width:0}
+#swapBtn{border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:8px;padding:.3rem .55rem;font-size:1rem;line-height:1;cursor:pointer}
+#swapBtn:hover{border-color:var(--acc);color:var(--acc)}
+.langgroup{display:flex;align-items:center;gap:.6rem;flex-basis:100%}
+.langgroup:empty{display:none}
+@media (min-width:761px){
+  .panes{position:relative}
+  .pane.pane-src{background:var(--src-tint)}
+  .pane.pane-tgt{background:var(--tgt-tint)}
+  #srcLabel{display:none}
+  .langslot{display:inline-flex;align-items:center;gap:.6rem;margin-left:.2rem}
+  .langslot .lt{font-size:.8rem;color:var(--sub);font-weight:600}
+  .langslot select{height:38px;font-weight:600;font-size:.95rem;min-width:150px;background:var(--card)}
+  #panes>#swapBtn{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:46px;height:46px;border-radius:50%;background:var(--acc);color:#fff;border:0;font-size:1.15rem;box-shadow:0 3px 10px rgba(0,0,0,.18);z-index:3;padding:0}
+  #swapBtn:hover{filter:brightness(1.12);color:#fff}
+  #goSlot{display:flex}
+}
+.more{display:contents}
+.more summary{display:none}
+.sub{display:none}
+select,input[type=text],input[type=password]{background:var(--bg);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:.4rem .5rem;font-size:.9rem}
+.panes{display:grid;grid-template-columns:1fr 1fr;gap:.9rem}
+@media (max-width:760px){.panes{grid-template-columns:1fr}}
+.pane{background:var(--card);border:1px solid var(--line);border-radius:12px;display:flex;flex-direction:column;min-height:340px}
+.pane .head{display:flex;justify-content:space-between;align-items:center;padding:.5rem .8rem;border-bottom:1px solid var(--line);font-size:.85rem;color:var(--sub)}
+textarea{flex:1;width:100%;border:0;background:transparent;color:var(--ink);padding:.8rem;font-size:1rem;line-height:1.6;resize:none;min-height:300px;font-family:inherit}
+::placeholder{color:var(--sub)}
+textarea:focus{outline:none}
+.foot{display:flex;gap:.5rem;align-items:center;padding:.5rem .8rem;border-top:1px solid var(--line);flex-wrap:wrap}
+button{border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:8px;padding:.4rem .8rem;font-size:.85rem;cursor:pointer}
+button:hover{border-color:var(--acc)}
+button.primary{background:var(--acc);color:var(--acc-ink);border-color:var(--acc);font-weight:600;padding:.45rem 1.3rem}
+#go{background:linear-gradient(90deg,#4f46e5,#9333ea);border:0;box-shadow:0 2px 8px rgba(79,70,229,.35)}
+#go:hover{filter:brightness(1.1)}
+button:disabled{opacity:.5;cursor:default}
+.status{font-size:.78rem;color:var(--sub);margin-left:auto;font-weight:600;font-variant-numeric:tabular-nums}
+.spinner{display:none;width:13px;height:13px;border:2px solid var(--line);border-top-color:var(--acc);border-radius:50%;animation:spin .8s linear infinite;vertical-align:-2px;margin-right:.35rem}
+.spinner.on{display:inline-block}
+@keyframes spin{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){.spinner.on{animation:none}}
+kbd{font-size:.7rem;opacity:.85;margin-left:.4rem;border:1px solid rgba(255,255,255,.45);border-radius:3px;padding:0 .25rem}
+.danger{color:#b91c1c;border-color:#fecaca;background:transparent}
+.mobile-bar{display:none}
+@media (max-width:760px){.panes{grid-template-columns:1fr}header{flex-wrap:wrap}header h1{font-size:1rem;white-space:nowrap}.badge{white-space:nowrap;font-size:.66rem;padding:.15rem .45rem}header .badge:last-of-type{display:none}
+/* 参考画像レイアウト: 1行目=訳元⇄訳先（ラベル非表示・大） 以下=翻訳→結果。細部設定は「その他設定」に折りたたみ */
+.bar{display:flex;flex-wrap:wrap;gap:.5rem}
+.bar label{display:flex;align-items:center;gap:.4rem;min-width:0}
+.bar label .lt{display:none}
+.langgroup{display:flex;align-items:center;gap:.5rem;width:100%;background:transparent;border:0;padding:0;border-radius:0}
+.f-lang{flex:1}
+.f-lang select{flex:1;min-width:0;height:44px;font-size:1rem}
+#swapBtn{order:0}
+.more{display:flex;flex-wrap:wrap;gap:.5rem;width:100%;order:9}
+.more summary{display:block;list-style:none;width:100%;text-align:center;border:1px dashed var(--line);border-radius:8px;padding:.45rem;font-size:.85rem;color:var(--sub);cursor:pointer}
+.more summary::-webkit-details-marker{display:none}
+.more .lt{display:inline}
+.more label:has(#model),.more label:has(#glossary){flex:1}
+.more select{min-width:0;flex:1}
+#gdlgBtn,#fileBtn{flex:1}
+#formWrap{display:flex;align-items:center;gap:.5rem;width:100%}
+#go{flex-basis:100%;height:48px;font-size:1rem;order:3}
+.pane .foot{flex-wrap:wrap}
+.pane{min-height:0}
+.pane textarea{min-height:180px}
+.sub{display:block;flex-basis:100%;font-size:.75rem;color:var(--sub);margin-top:-2px}
+}
+:focus-visible{outline:2px solid var(--acc);outline-offset:2px;border-radius:4px}
+.status.err{color:var(--err)}
+.status.ok{color:var(--ok)}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.seg button{border:0;border-radius:0;padding:.3rem .7rem;font-size:.8rem}
+.seg button.on{background:var(--acc);color:var(--acc-ink)}
+dialog{border:1px solid var(--line);border-radius:12px;background:var(--card);color:var(--ink);padding:1rem;max-width:560px;width:92%;display:flex;flex-direction:column;max-height:80vh}
+dialog:not([open]){display:none}
+dialog::backdrop{background:rgba(0,0,0,.4)}
+dialog h3{margin:.2rem 0 .8rem}
+dialog textarea{flex:1;min-height:240px;font-size:.9rem;resize:none}
+/* ---- 接続設定ダイアログ ---- */
+.cfield{display:flex;flex-direction:column;gap:.25rem;margin-bottom:.7rem}
+.cfield label{font-size:.8rem;color:var(--sub);font-weight:600}
+.cfield input{width:100%}
+.cres{font-size:.8rem;margin:.5rem 0 0;white-space:pre-wrap;word-break:break-all;line-height:1.5}
+.cres.ok{color:var(--ok)}
+.cres.err{color:var(--err)}
+.cnote{font-size:.75rem;color:var(--sub);margin-top:.6rem;line-height:1.6}
+/* ---- プレビュー/対照モーダル（文書翻訳） ---- */
+#pdlg{max-width:920px;resize:both;overflow:hidden;min-width:min(360px,94vw);max-height:94vh}
+.pmeta{font-size:.78rem;color:var(--sub);margin:0 0 .6rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pscroll{flex:1;overflow:auto;min-height:120px;border:1px solid var(--line);border-radius:8px;background:var(--bg)}
+.prow{display:flex;gap:.5rem;padding:.35rem .6rem;border-bottom:1px solid var(--line);align-items:flex-start}
+.prow:last-child{border-bottom:0}
+.pnum{font-size:.72rem;color:var(--sub);min-width:1.8rem;text-align:right;font-variant-numeric:tabular-nums;padding-top:.15rem;flex-shrink:0}
+.ptext{white-space:pre-wrap;word-break:break-word;font-size:.85rem;line-height:1.55;flex:1;min-width:0}
+.pmore{display:block;width:100%;border:0;border-top:1px solid var(--line);background:var(--chip);color:var(--acc);padding:.5rem;font-size:.82rem;cursor:pointer}
+.pmore:hover{filter:brightness(1.05)}
+.pair{display:grid;grid-template-columns:1fr 1fr;border-bottom:1px solid var(--line)}
+.pair:last-child{border-bottom:0}
+.pair .col{display:flex;gap:.45rem;padding:.35rem .6rem;align-items:flex-start;min-width:0}
+.plab{font-size:.66rem;color:var(--acc);font-weight:700;flex-shrink:0;padding-top:.2rem}
+.pair .col.hl,.pair .col:hover{background:var(--hl-bg);box-shadow:inset 3px 0 0 var(--hl-border)}
+@media (max-width:760px){.pair{grid-template-columns:1fr}}
+/* ---- 見た目プレビュー（pdlg「文字｜見た目」タブ） ---- */
+.ptabs{display:flex;gap:.25rem;background:var(--bg);border:1px solid var(--line);border-radius:9px;padding:.2rem;margin-bottom:.6rem}
+.ptabs button{flex:1;border:0;background:transparent;color:var(--sub);font-weight:600;font-size:.82rem;padding:.35rem;border-radius:7px;cursor:pointer}
+.ptabs button.on{background:var(--acc);color:var(--acc-ink)}
+.vsingle{padding:.6rem}
+.vduo{display:grid;grid-template-columns:1fr 1fr;gap:.8rem;padding:.6rem}
+.vcol h4{margin:0 0 .4rem;font-size:.78rem;color:var(--sub);font-weight:700}
+.vcol img,.vsingle img{display:block;width:100%;border:1px solid var(--line);border-radius:6px;margin-bottom:.5rem;background:#fff}
+.vnote{font-size:.78rem;color:var(--sub);padding:.4rem .6rem}
+.vload{display:flex;align-items:center;gap:.5rem;padding:1.5rem;color:var(--sub);font-size:.85rem;justify-content:center}
+.viframe{display:block;width:100%;height:56vh;border:0;background:#fff}
+.vpre{margin:0;padding:.8rem;font-size:.85rem;line-height:1.6;white-space:pre-wrap;word-break:break-word;font-family:inherit}
+@media (max-width:760px){.vduo{grid-template-columns:1fr}}
+/* ---- 見た目プレビューのズーム ---- */
+.vzoom{display:flex;align-items:center;gap:.4rem;padding:.4rem .6rem;border-bottom:1px solid var(--line);background:var(--card);position:sticky;top:0;z-index:2}
+.vzoom button{padding:.15rem .55rem;font-size:.85rem}
+.vz-pct{font-size:.78rem;font-weight:700;min-width:3.4em;text-align:center;font-variant-numeric:tabular-nums;color:var(--sub)}
+.vz-note{font-size:.7rem;color:var(--sub);margin-left:auto}
+@media (max-width:760px){.vz-note{display:none}}
+/* ---- 翻訳進捗バー ---- */
+.pbar{height:8px;border-radius:99px;background:var(--chip);border:1px solid var(--line);overflow:hidden;margin-bottom:.6rem}
+.docjob .pbar{flex-basis:100%;margin-bottom:0}
+.pbar-fill{height:100%;width:0%;background:var(--acc);border-radius:99px;transition:width .3s ease}
+.pbar.indet .pbar-fill{width:35%;transition:none;animation:barslide 1.1s ease-in-out infinite}
+@keyframes barslide{0%{margin-left:-35%}100%{margin-left:100%}}
+@media (prefers-reduced-motion:reduce){.pbar.indet .pbar-fill{animation:none;width:100%;opacity:.5}}
+/* ---- 翻訳履歴 ---- */
+.hist-h{font-size:.8rem;color:var(--sub);font-weight:700;margin:1rem 0 .4rem}
+.hrow{display:flex;flex-wrap:wrap;gap:.4rem .6rem;align-items:center;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:.5rem .8rem;margin-bottom:.4rem}
+.hrow .h-name{font-weight:600;font-size:.85rem;word-break:break-all;flex:1;min-width:0}
+.hrow .h-meta{font-size:.72rem;color:var(--sub);font-variant-numeric:tabular-nums}
+.hrow button{font-size:.75rem;padding:.25rem .6rem}
+/* ---- セグメント対照ビュー（テキスト翻訳・訳文ペイン内切替） ---- */
+#segView{display:none;flex-direction:column;flex:1;min-height:0}
+#segView.on{display:flex}
+.seghead{display:flex;justify-content:space-between;align-items:center;gap:.5rem;padding:.4rem .8rem;border-top:1px solid var(--line);border-bottom:1px solid var(--line);font-size:.78rem;color:var(--sub);font-weight:600;background:var(--chip)}
+.seghead button{padding:.15rem .5rem;font-size:.72rem}
+.segcols{display:grid;grid-template-columns:1fr 1fr;font-size:.7rem;color:var(--sub);padding:.2rem .8rem;border-bottom:1px solid var(--line)}
+#segRows{flex:1;overflow:auto;min-height:0}
+.segrow{display:grid;grid-template-columns:1fr 1fr;border-bottom:1px solid var(--line)}
+.segrow:last-child{border-bottom:0}
+.segrow .cell{padding:.35rem .6rem;font-size:.8rem;line-height:1.55;white-space:pre-wrap;word-break:break-word;min-width:0;display:flex;gap:.4rem;align-items:flex-start}
+.segrow .cell .slab{font-size:.64rem;font-weight:700;color:var(--acc);flex-shrink:0;padding-top:.15rem}
+.segrow .cell .stext{flex:1;min-width:0}
+.segrow .cell.src{background:var(--src-tint)}
+.segrow .cell.tgt{background:var(--tgt-tint)}
+.segrow .cell.hl,.segrow .cell:hover{background:var(--hl-bg);box-shadow:inset 3px 0 0 var(--hl-border)}
+@media (max-width:760px){.segrow{grid-template-columns:1fr}.segcols{display:none}}
+/* ---- タブ（テキスト翻訳 / 文書翻訳） ---- */
+.tabs{display:flex;gap:.25rem;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:.25rem;margin-bottom:.9rem}
+.tabs button{flex:1;border:0;background:transparent;color:var(--sub);padding:.5rem .8rem;font-size:.9rem;font-weight:600;border-radius:9px;cursor:pointer}
+.tabs button.on{background:var(--acc);color:var(--acc-ink)}
+#docLangRow:empty{display:none}
+/* ---- ドロップゾーン（文書翻訳タブ） ---- */
+.dropzone{border:2px dashed var(--line);border-radius:16px;background:var(--card);padding:3.2rem 1.5rem;text-align:center;cursor:pointer;transition:border-color .15s ease,background .15s ease}
+.dropzone:hover{border-color:var(--acc)}
+.dropzone.drag{border-color:var(--acc);background:var(--chip)}
+.dropzone.busy{opacity:.55;pointer-events:none}
+.dz-icon{font-size:2.5rem;line-height:1;margin-bottom:.6rem}
+.dz-title{font-weight:700;font-size:1.05rem}
+.dz-sub{color:var(--acc);font-size:.88rem;font-weight:600;margin-top:.35rem}
+.dz-note{color:var(--sub);font-size:.75rem;margin-top:.8rem}
+.docjob{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:.8rem 1rem;margin-top:.9rem;display:flex;flex-wrap:wrap;gap:.5rem .8rem;align-items:center}
+.docjob .dj-name{font-weight:700;font-size:.88rem;word-break:break-all}
+.docjob .dj-status{font-size:.78rem;color:var(--sub);font-weight:600;font-variant-numeric:tabular-nums}
+.docjob .dj-status.ok{color:var(--ok)}
+.docjob .dj-status.err{color:var(--err)}
+@media (max-width:760px){.dropzone{padding:2.2rem 1rem}.dz-title{font-size:.95rem}}
+.glist{display:flex;gap:.4rem;flex-wrap:wrap;margin-bottom:.6rem}
+.glist .chip{background:var(--chip);border-radius:99px;padding:.25rem .7rem;font-size:.82rem;cursor:pointer;border:1px solid transparent}
+.glist .chip.on{border-color:var(--acc)}
+footer{text-align:center;color:var(--sub);font-size:.72rem;padding:1rem}
+a{color:var(--acc)}
+</style>
+</head>
+<body>
+<header>
+  <h1>PLaMo翻訳</h1>
+  <span class="sub">テキストを入力して「翻訳」を押すと翻訳されます</span>
+  <span class="badge">Built with PLaMo</span>
+  <span class="badge">ローカル完結・外部送信なし</span>
+  <button id="cfgBtn" onclick="openConfig()" aria-label="接続設定" title="接続設定（Ollama エンドポイント・API キー）">⚙</button>
+  <button id="themeBtn" onclick="toggleTheme()" aria-label="テーマ切替" title="ライト/ダーク切替">🌙</button>
+</header>
+<main>
+  <div class="tabs" role="tablist" aria-label="翻訳モード">
+    <button id="tabText" class="on" role="tab" aria-selected="true" onclick="showTab('text')">テキスト翻訳</button>
+    <button id="tabDoc" role="tab" aria-selected="false" onclick="showTab('doc')">文書翻訳</button>
+  </div>
+  <div class="bar">
+    <div class="langgroup" id="langSlot">
+      <label class="f-lang" id="fSrc"><span class="lt">原文</span><select id="source"></select></label>
+      <button id="swapBtn" onclick="swapLangs()" title="言語とテキストを入れ替え" aria-label="言語を入れ替え">⇄</button>
+      <label class="f-lang" id="fTgt"><select id="target"></select></label>
+    </div>
+    <details class="more" open>
+      <summary>⚙ その他設定</summary>
+      <span id="formWrap">文体
+        <span class="seg">
+          <button id="fPlain" class="on" onclick="setForm('plain')">常体</button>
+          <button id="fPolite" onclick="setForm('polite')">敬体</button>
+        </span>
+      </span>
+      <label><span class="lt">用語集</span><select id="glossary"><option value="">なし</option></select></label>
+      <button id="gdlgBtn" onclick="openGlossary()">用語集管理</button>
+      <button id="fileBtn" onclick="fileInput.click()">ファイル読込</button>
+      <label><span class="lt">モデル</span><select id="model"></select></label>
+    </details>
+    <input type="file" id="fileInput" accept=".txt,.md,.markdown,.html,.htm,.pdf,.docx,.pptx,.xlsx" style="display:none">
+    <input type="file" id="docInput" accept=".pdf,.docx,.pptx,.xlsx,.md,.markdown,.html,.htm,.txt" style="display:none">
+  </div>
+
+  <div id="viewText">
+  <div class="panes" id="panes">
+    <div class="pane pane-src">
+      <div class="head"><span id="srcLabel">原文</span><span class="langslot" id="srcLangSlot"></span><span style="flex:1"></span><span id="goSlot"></span></div>
+      <textarea id="src" placeholder="ここに翻訳したい文章を入力してください（HTML / Markdown 対応・タグは保持されます）"></textarea>
+      <div class="foot srcfoot" id="srcFoot">
+        <span class="status" id="srcCount" style="margin:0">0 文字</span><span class="status" id="srcInfo" style="margin:0"></span>
+        <span style="flex:1"></span>
+        <button onclick="clearAll()">クリア</button>
+        <button class="primary" id="go" onclick="doTranslate()">翻訳<kbd>Ctrl⏎</kbd></button>
+      </div>
+    </div>
+    <div class="pane pane-tgt">
+      <div class="head"><span>訳文</span><span class="langslot" id="tgtLangSlot"></span><span style="flex:1"></span><span class="spinner" id="spin"></span><span class="status" id="st" aria-live="polite"></span></div>
+      <textarea id="dst" readonly placeholder="翻訳結果がここに表示されます"></textarea>
+      <div id="segView" aria-label="セグメント対照ビュー">
+        <div class="seghead"><span>セグメント対照（チャンク単位・原文 ⇄ 訳文）</span><button onclick="toggleSegView()">閉じる</button></div>
+        <div class="segcols"><span>原文（チャンク）</span><span>訳文（チャンク）</span></div>
+        <div id="segRows"></div>
+      </div>
+      <div class="foot">
+        <span style="flex:1"></span>
+        <button id="segBtn" style="display:none" onclick="toggleSegView()" title="原文と訳文のチャンク対照を表示">セグメント</button>
+        <button onclick="copyOut()">コピー</button>
+        <button onclick="downloadOut()">ダウンロード</button>
+        <button id="retry" style="display:none" onclick="doTranslate()">再試行</button>
+      </div>
+    </div>
+  </div>
+  <div class="mobile-bar"><button class="primary" onclick="doTranslate()">翻訳</button></div>
+  </div>
+  <div id="viewDoc" style="display:none">
+    <div class="bar" id="docLangRow"></div>
+    <div class="dropzone" id="dropzone" role="button" tabindex="0" title="クリックでファイルを選択">
+      <div class="dz-icon">📄</div>
+      <div class="dz-title">PDF / Word / PowerPoint / Excel / Markdown / HTML / テキスト をここにドロップ</div>
+      <div class="dz-sub">またはクリックして選択</div>
+      <div class="dz-note">対応形式: .pdf / .docx / .pptx / .xlsx / .md / .markdown / .html / .htm / .txt ・ 上限 100MB ・ テキスト翻訳タブの「ファイル読込」では textarea に読み込みます</div>
+    </div>
+    <div class="docjob" id="docJob" style="display:none">
+      <span class="dj-name" id="docJobName"></span>
+      <span style="flex:1"></span>
+      <span class="spinner" id="docSpin"></span><span class="dj-status" id="docSt" aria-live="polite"></span>
+      <div class="pbar" id="docBar" style="display:none" role="progressbar" aria-label="翻訳進捗"><div class="pbar-fill"></div></div>
+      <button id="docPreviewBtn" style="display:none" onclick="reShowPreview()">翻訳後プレビュー</button>
+      <button id="docDlBtn" class="primary" style="display:none" onclick="downloadDocOut()">ダウンロード</button>
+    </div>
+    <div id="histWrap" style="display:none">
+      <div class="hist-h">翻訳履歴（このセッション内・新しい順）</div>
+      <div id="histList"></div>
+    </div>
+  </div>
+</main>
+<footer>PLaMo 3 Translate（Preferred Networks）/ PLaMo Community License（個人・年商10億円以下の企業はエッジでの利用に限り無償） ・ 翻訳結果の利用時は AI 出力である旨の明記をお願いします</footer>
+
+<dialog id="gdlg">
+  <h3>用語集管理</h3>
+  <div class="glist" id="glist"></div>
+  <div style="display:flex;gap:.5rem;margin-bottom:.5rem">
+    <input type="text" id="gname" placeholder="用語集名" style="flex:1">
+  </div>
+  <div style="font-size:.78rem;color:var(--sub);margin:.25rem 0 .5rem">1行に1ペア（例: invoice => 請求書）</div>
+  <textarea id="gtext" placeholder="dashboard => 操作盤&#10;invoice => 請求書"></textarea>
+  <div class="foot" style="border-top:0">
+    <button class="danger" onclick="deleteGlossary()">削除</button>
+    <span style="flex:1"></span>
+    <button onclick="gdlg.close()">閉じる</button>
+    <button class="primary" onclick="saveGlossary()">保存</button>
+  </div>
+</dialog>
+
+<dialog id="cdlg">
+  <h3>接続設定</h3>
+  <div class="cfield"><label for="cUrl">Ollama / 互換 API エンドポイント</label>
+    <input type="text" id="cUrl" placeholder="http://127.0.0.1:11434" autocomplete="off"></div>
+  <div class="cfield"><label for="cKey">API キー（任意）</label>
+    <input type="password" id="cKey" autocomplete="new-password" placeholder="未設定"></div>
+  <div class="cfield"><label for="cModel">モデル名（任意・空欄で自動検出）</label>
+    <input type="text" id="cModel" placeholder="例: hf.co/pfnet/plamo-3-translate-2b-GGUF:Q4_K_M" autocomplete="off"></div>
+  <div class="cnote">設定はサーバー側に保存され、テキスト・文書・PDF 翻訳すべてに再起動不要で即反映されます。モデル名は /api/tags 非対応のリモート API（PLaMo ホスティング等）を使う場合に入れます。</div>
+  <div class="cres" id="cRes" aria-live="polite"></div>
+  <div class="foot" style="border-top:0">
+    <button id="cClearKey" style="display:none" class="danger" onclick="clearApiKey()">キー消去</button>
+    <span style="flex:1"></span>
+    <button onclick="cdlg.close()">閉じる</button>
+    <button id="cTestBtn" onclick="testConfig()">接続テスト</button>
+    <button class="primary" onclick="saveConfig()">保存</button>
+  </div>
+</dialog>
+
+<dialog id="pdlg">
+  <h3 id="pdlgTitle">プレビュー</h3>
+  <div class="pmeta" id="pdlgMeta"></div>
+  <div class="pbar" id="pdlgBar" style="display:none" role="progressbar" aria-label="翻訳進捗"><div class="pbar-fill"></div></div>
+  <div class="ptabs" id="pdlgTabs">
+    <button id="ptText" class="on" onclick="showPView('text')">文字</button>
+    <button id="ptVisual" onclick="showPView('visual')">見た目</button>
+  </div>
+  <div class="pscroll" id="pdlgBody"></div>
+  <div class="pscroll" id="pdlgVisual" style="display:none"></div>
+  <div class="foot" style="border-top:0">
+    <button id="pdlgDl" style="display:none">ダウンロード</button>
+    <span style="flex:1"></span>
+    <button id="pdlgCancel">キャンセル</button>
+    <button id="pdlgGo" class="primary" style="display:none">翻訳開始</button>
+  </div>
+</dialog>
+
+<script>
+// 公式 README の 53言語一覧（zh は zh-hans / zh-hant に展開）
+const LANGS = [["en","英語"],["ja","日本語"],["zh-hans","中国語(簡体)"],["zh-hant","中国語(繁体)"],["ko","韓国語"],["es","スペイン語"],["fr","フランス語"],["de","ドイツ語"],["it","イタリア語"],["nl","オランダ語"],["ru","ロシア語"],["id","インドネシア語"],["th","タイ語"],["vi","ベトナム語"],["ar","アラビア語"],["pl","ポーランド語"],["hi","ヒンディー語"],["ms","マレーシア語"],["tl","タガログ語"],["ceb","セブアノ語"],["bn","ベンガル語"],["fa","ペルシア語"],["he","ヘブライ語"],["sw","スワヒリ語"],["my","ビルマ語"],["km","クメール語"],["ne","ネパール語"],["si","シンハラ語"],["ta","タミル語"],["te","テルグ語"],["mr","マラーティー語"],["gu","グジャラート語"],["ml","マラヤーラム語"],["pa","パンジャーブ語"],["ur","ウルドゥー語"],["uz","ウズベク語"],["kk","カザフ語"],["az","アゼルバイジャン語"],["be","ベラルーシ語"],["bg","ブルガリア語"],["ca","カタルーニャ語"],["et","エストニア語"],["eu","バスク語"],["hr","クロアチア語"],["hu","ハンガリー語"],["hy","アルメニア語"],["jv","ジャワ語"],["ka","ジョージア語"],["lt","リトアニア語"],["lv","ラトビア語"],["sk","スロバキア語"],["sl","スロベニア語"],["sr","セルビア語"]];
+const $=id=>document.getElementById(id);
+let form='plain', glossaries={}, currentFile=null;
+
+// ---- テーマ切替（既定: ライト / localStorage に保持） ----
+function applyTheme(t){
+  document.documentElement.dataset.theme=t;
+  $('themeBtn').textContent = t==='dark' ? '☀️' : '🌙';
+}
+function toggleTheme(){
+  const t = document.documentElement.dataset.theme==='dark' ? 'light' : 'dark';
+  try{ localStorage.setItem('plamo-theme', t); }catch(e){}
+  applyTheme(t);
+}
+(()=>{ let saved=null; try{ saved=localStorage.getItem('plamo-theme'); }catch(e){}
+  applyTheme(saved==='dark' ? 'dark' : 'light'); })();
+
+function fillLang(sel, withAuto){
+  sel.innerHTML = (withAuto?'<option value="">自動判定</option>':'') +
+    LANGS.map(([c,n])=>`<option value="${c}">${n}</option>`).join('');
+}
+fillLang($('target')); fillLang($('source'), true);
+$('target').value='en';
+
+function setForm(f){
+  form=f; $('fPlain').classList.toggle('on',f==='plain'); $('fPolite').classList.toggle('on',f==='polite');
+}
+$('target').onchange=()=>{ $('formWrap').style.display = $('target').value==='ja' ? '' : 'none'; };
+
+// ---- 言語⇄入れ替え（訳元が自動判定のときは ja⇄en を想定） ----
+function swapLangs(){
+  const t=$('target').value, s=$('source').value;
+  $('target').value = s || (t==='ja' ? 'en' : 'ja');
+  $('source').value = t;
+  const dst=$('dst').value;
+  if(dst.trim()){ $('src').value=dst; $('dst').value=''; $('src').dispatchEvent(new Event('input')); }
+  $('target').dispatchEvent(new Event('change'));
+}
+
+async function loadModels(){
+  const short=m=>{const x=m.match(/translate-(\d+(?:\.\d+)?)b/i);return x?x[1]+'B':m;};
+  try{
+    const d=await (await fetch('api/models')).json();
+    $('model').innerHTML=(d.models||[]).map(m=>`<option value="${m}" ${m===d.default?'selected':''}>${short(m)}</option>`).join('')
+      ||'<option>（モデル未インストール）</option>';
+  }catch(e){ $('model').innerHTML='<option>接続エラー</option>'; }
+}
+loadModels();
+
+async function loadGlossaries(){
+  glossaries=await (await fetch('api/glossaries')).json();
+  const sel=$('glossary'), cur=sel.value;
+  sel.innerHTML='<option value="">なし</option>'+Object.keys(glossaries).map(k=>`<option>${k}</option>`).join('');
+  sel.value=cur;
+}
+loadGlossaries();
+
+// ---- 接続設定（サーバー側 config.json 保存・再起動不要） ----
+const cdlg=$('cdlg');
+function cfgKeyPlaceholder(d){
+  return d.api_key_set ? `保存済み（${d.api_key_masked}）— 空欄で維持` : '未設定（任意）';
+}
+async function openConfig(){
+  $('cRes').textContent=''; $('cRes').className='cres';
+  try{
+    const d=await (await fetch('api/config')).json();
+    $('cUrl').value=d.ollama_url||'';
+    $('cModel').value=d.model||'';
+    $('cKey').value='';
+    $('cKey').placeholder=cfgKeyPlaceholder(d);
+    $('cClearKey').style.display=d.api_key_set?'':'none';
+  }catch(e){ flash('設定の取得に失敗: '+e.message,'err'); return; }
+  cdlg.showModal();
+}
+async function testConfig(){
+  const r=$('cRes'); r.className='cres'; r.textContent='接続テスト中…'; $('cTestBtn').disabled=true;
+  try{
+    const d=await (await fetch('api/config/test',{method:'POST'})).json();
+    if(d.ok){
+      r.className='cres ok';
+      let s=`✓ 接続成功: ${d.url}`;
+      if(d.plamo&&d.plamo.length) s+=`\n検出モデル: ${d.plamo.join(', ')}`;
+      else if(d.models&&d.models.length) s+=`\nモデル一覧: ${d.models.slice(0,5).join(', ')}${d.models.length>5?' …':''}`;
+      else s+='\n（モデル一覧は空）';
+      r.textContent=s;
+    }else{ r.className='cres err'; r.textContent='✕ '+(d.error||'接続失敗'); }
+  }catch(e){ r.className='cres err'; r.textContent='✕ '+e.message; }
+  finally{ $('cTestBtn').disabled=false; }
+}
+async function saveConfig(){
+  const body={ollama_url:$('cUrl').value.trim(), model:$('cModel').value.trim()};
+  const k=$('cKey').value;
+  if(k) body.api_key=k;  // 空欄は「既存維持」（サーバー側仕様）
+  const r=$('cRes'); r.className='cres'; r.textContent='保存中…';
+  try{
+    const res=await fetch('api/config',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+    if(!res.ok){ const j=await res.json().catch(()=>({})); throw new Error(j.detail||('HTTP '+res.status)); }
+    const d=await res.json();
+    $('cKey').value=''; $('cKey').placeholder=cfgKeyPlaceholder(d);
+    $('cClearKey').style.display=d.api_key_set?'':'none';
+    r.className='cres ok'; r.textContent='保存しました。次回リクエストから即反映されます';
+    loadModels(); // モデルセレクタを新設定で更新
+    flash('接続設定を保存しました','ok');
+  }catch(e){ r.className='cres err'; r.textContent='保存失敗: '+e.message; }
+}
+async function clearApiKey(){
+  try{
+    const res=await fetch('api/config',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({api_key:'__CLEAR__'})});
+    if(!res.ok) throw new Error('HTTP '+res.status);
+    $('cKey').value=''; $('cKey').placeholder='未設定（任意）';
+    $('cClearKey').style.display='none';
+    const r=$('cRes'); r.className='cres ok'; r.textContent='API キーを消去しました（保存はまだ押してください）';
+  }catch(e){ const r=$('cRes'); r.className='cres err'; r.textContent='消去失敗: '+e.message; }
+}
+
+$('src').addEventListener('input',()=>{
+  const n=$('src').value.length;
+  $('srcCount').textContent = `${n} 文字`;
+  // 原文を編集したらチャンク対応が崩れるため対照ビューはクリア
+  if($('segBtn').style.display!=='none') clearSegView();
+});
+
+// ---- ファイル読込: 投入経路により textarea 読込 or 文書翻訳フローへ ----
+const BIN_DOC_EXTS=new Set(['pdf','docx','pptx','xlsx']);       // バイナリ文書（プレビュー→翻訳）
+const TEXT_DOC_EXTS=new Set(['md','markdown','html','htm','txt']); // テキスト文書（文書タブ経由なら文書翻訳）
+const DOC_EXTS=new Set([...BIN_DOC_EXTS,...TEXT_DOC_EXTS]);
+async function isBinaryFile(f){
+  try{
+    const head=new Uint8Array(await f.slice(0,4).arrayBuffer());
+    const zip=head[0]===0x50&&head[1]===0x4B&&head[2]===0x03&&head[3]===0x04; // PK\x03\x04
+    const pdf=head[0]===0x25&&head[1]===0x50&&head[2]===0x44&&head[3]===0x46; // %PDF
+    return zip||pdf;
+  }catch(e){ return false; }
+}
+// ---- ファイル投入共通（via='text'=テキストタブのファイル読込 / via='doc'=文書タブ・ドロップ） ----
+async function handleFile(f,via){
+  const ext=(f.name.split('.').pop()||'').toLowerCase();
+  if(BIN_DOC_EXTS.has(ext)){ startDocFlow(f); return; }
+  // テキスト系拡張子でも ZIP/%PDF マジックならバイナリ → 文字化け防止で文書翻訳へ
+  if(await isBinaryFile(f)){ flash('バイナリファイルを検出: 文書翻訳で処理します'); startDocFlow(f); return; }
+  if(via==='doc'&&TEXT_DOC_EXTS.has(ext)){ startDocFlow(f); return; } // 文書タブ経由の md/html/txt は文書翻訳
+  showTab('text');
+  currentFile=f.name;
+  $('src').value=await f.text();
+  $('srcInfo').textContent=f.name;
+  $('src').dispatchEvent(new Event('input'));
+  flash(`${f.name} を読み込みました`);
+}
+$('fileInput').addEventListener('change',async e=>{
+  const f=e.target.files[0]; e.target.value=''; if(!f) return;
+  await handleFile(f,'text');
+});
+
+// ---- 文書翻訳（Office/PDF: 書式保持のまま訳してダウンロード） ----
+$('docInput').addEventListener('change',e=>{
+  const f=e.target.files[0]; e.target.value=''; if(!f) return;
+  startDocFlow(f);
+});
+
+// ---- ドラッグ&ドロップ（文書翻訳タブのドロップゾーン） ----
+let dragDepth=0;
+const dz=$('dropzone');
+dz.addEventListener('click',()=>docInput.click());
+dz.addEventListener('keydown',e=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); docInput.click(); } });
+['dragenter','dragover'].forEach(t=>dz.addEventListener(t,e=>{
+  e.preventDefault(); if(t==='dragenter') dragDepth++; dz.classList.add('drag');
+}));
+dz.addEventListener('dragleave',()=>{ dragDepth=Math.max(0,dragDepth-1); if(!dragDepth) dz.classList.remove('drag'); });
+dz.addEventListener('drop',e=>{
+  e.preventDefault(); dragDepth=0; dz.classList.remove('drag');
+  handleDropFiles(e.dataTransfer?e.dataTransfer.files:null);
+});
+// ゾーン外に落としたときにブラウザがファイルを開くのを防ぐ
+document.addEventListener('dragover',e=>e.preventDefault());
+document.addEventListener('drop',e=>e.preventDefault());
+async function handleDropFiles(list){
+  if(!list||!list.length) return;
+  if(list.length>1) flash(`1件目のみ処理（残り ${list.length-1} 件は無視）`);
+  await handleFile(list[0],'doc');
+}
+
+function setBusy(on){
+  $('spin').classList.toggle('on',on);
+  $('docSpin').classList.toggle('on',on);
+  $('dropzone').classList.toggle('busy',on);
+}
+let lastDoc=null; // {pairs,fileEv,name} — ジョブカード「最新」表示用（履歴の先頭と同じデータを指す）
+const HISTORY=[]; // セッション内翻訳履歴（新しい順・最大20件） {name,time,timeStr,ext,pairs,fileEv,origFile}
+
+async function startDocFlow(f){
+  showTab('doc');
+  if(f.size>100*1024*1024){ flash(`エラー: ${f.name} は100MBを超えています`,'err'); return; }
+  $('docJob').style.display=''; $('docJobName').textContent=f.name;
+  $('docPreviewBtn').style.display='none'; $('docDlBtn').style.display='none';
+  setBars('hide');
+  const ext=(f.name.split('.').pop()||'').toLowerCase();
+  if(ext==='pdf'){ showPdfPrePreview(f); return; }  // PDF はセグメント抽出不可 → ページ画像で翻訳前プレビュー（失敗時は即翻訳）
+  if(!DOC_EXTS.has(ext)){ flash(`エラー: 対応形式は .pdf / .docx / .pptx / .xlsx / .md / .html / .txt です（選択: .${ext}）`,'err'); return; }
+  setBusy(true); flash('プレビューを準備中…');
+  const fd=new FormData(); fd.append('file',f);
+  try{
+    const res=await fetch('api/preview-file',{method:'POST',body:fd});
+    if(!res.ok){ const j=await res.json().catch(()=>({})); throw new Error(j.detail||('HTTP '+res.status)); }
+    const d=await res.json();
+    $('docJobName').textContent=`${d.name} ・ ${d.count}セグメント`;
+    showPrePreview(f,d);
+  }catch(err){ flash('エラー: '+err.message,'err'); }
+  finally{ setBusy(false); }
+}
+
+// ---- PDF 翻訳前プレビュー: preview-file 対象外なので render-preview のページ画像を「見た目」タブ既定で表示 ----
+async function showPdfPrePreview(f){
+  setBusy(true); flash('プレビューを準備中…');
+  let vis=null;
+  try{ vis=await fetchRenderFile(f); }
+  catch(err){ vis=null; }
+  finally{ setBusy(false); }
+  if(!vis){ flash('プレビュー準備に失敗したため翻訳を開始します','err'); startDocTranslate(f); return; }
+  pvCtx={mode:'pre',file:f,visOrig:vis,visOut:null,visualDone:false,pdf:true};
+  pdlgBody.textContent='';
+  const n=document.createElement('div'); n.className='vnote';
+  n.textContent='PDF にはテキストセグメント抽出がないため「文字」タブは使えません。「見た目」タブでページ画像を確認してください';
+  pdlgBody.append(n);
+  $('pdlgTitle').textContent='翻訳前プレビュー';
+  $('pdlgMeta').textContent=`${f.name} ・ PDF（ページ画像プレビュー）`;
+  showPView('visual');
+  $('pdlgDl').style.display='none';
+  $('pdlgGo').style.display=''; $('pdlgGo').textContent='翻訳開始';
+  $('pdlgGo').onclick=()=>beginTranslateFromModal(f);
+  $('pdlgCancel').textContent='キャンセル'; $('pdlgCancel').onclick=()=>pdlg.close();
+  pdlg.showModal();
+}
+
+// ---- 進捗バー（ジョブカード＋pdlg が開いていればそちらも） ----
+function setBar(bar,mode,pct){
+  if(!bar) return;
+  if(mode==='hide'){ bar.style.display='none'; return; }
+  bar.style.display='';
+  bar.classList.toggle('indet', mode==='indet');
+  if(mode==='det') bar.firstElementChild.style.width=pct+'%';
+}
+function setBars(mode,pct){
+  setBar($('docBar'),mode,pct);
+  if(pdlg.open) setBar($('pdlgBar'),mode,pct);
+}
+
+// ---- モーダルを開いたまま翻訳開始（pdlg 内のバーでも進捗が追える） ----
+function beginTranslateFromModal(f){
+  $('pdlgGo').style.display='none';
+  $('pdlgTitle').textContent='翻訳中';
+  $('pdlgCancel').textContent='閉じる'; // 閉じても翻訳は継続（ジョブカードに進行表示）
+  startDocTranslate(f);
+}
+
+async function startDocTranslate(f){
+  setBusy(true);
+  $('docJob').style.display=''; $('docJobName').textContent=f.name;
+  $('docPreviewBtn').style.display='none'; $('docDlBtn').style.display='none';
+  lastDoc=null;
+  const ext=(f.name.split('.').pop()||'').toLowerCase();
+  const pairs=[]; let fileEv=null, segN=0;
+  const fd=new FormData();
+  fd.append('file',f); fd.append('target_lang',$('target').value);
+  if($('source').value) fd.append('source_lang',$('source').value);
+  if($('target').value==='ja') fd.append('form',form);
+  if($('model').value) fd.append('model',$('model').value);
+  if($('glossary').value) fd.append('glossary',$('glossary').value);
+  try{
+    const res=await fetch('api/translate-file',{method:'POST',body:fd});
+    if(!res.ok){ const j=await res.json().catch(()=>({})); throw new Error(j.detail||('HTTP '+res.status)); }
+    const reader=res.body.getReader(), dec=new TextDecoder(); let buf='';
+    while(true){
+      const {value,done}=await reader.read(); if(done) break;
+      buf+=dec.decode(value,{stream:true});
+      let nl;
+      while((nl=buf.indexOf('\n'))>=0){
+        const line=buf.slice(0,nl).trim(); buf=buf.slice(nl+1); if(!line) continue;
+        const ev=JSON.parse(line);
+        if(ev.ev==='start'){
+          segN=ev.segments||0;
+          if(ev.pdf) setBars('indet'); else setBars('det',0); // PDF は総セグメント不明 → 不定バー
+          flash(ev.pdf ? `PDF 翻訳開始…（レイアウト保持変換${ev.total_pages?`・全 ${ev.total_pages} ページ`:''}）ページを閉じると翻訳は中断されます` : `文書翻訳中…（${ev.segments}セグメント）`);
+        }
+        else if(ev.ev==='progress'){
+          flash(ev.msg);
+          if(ev.segs!==undefined) $('docJobName').textContent=`${f.name} ・ 翻訳済み ${ev.segs} セグメント${ev.pages?`（全 ${ev.pages} ページ）`:''}`;
+          if(pdlg.open) $('pdlgMeta').textContent=ev.msg;
+        }
+        else if(ev.ev==='batch'){
+          flash(`翻訳中 ${ev.i}/${ev.of} バッチ…`);
+          setBars('det', ev.of ? Math.round(ev.i/ev.of*100) : 0);
+          if(pdlg.open) $('pdlgMeta').textContent=`翻訳中 ${ev.i}/${ev.of} バッチ…`;
+        }
+        else if(ev.ev==='seg') pairs.push(...ev.pairs);
+        else if(ev.ev==='file'){
+          fileEv=ev; flash('完了 — 「ダウンロード」ボタンから保存できます','ok');
+          $('docJobName').textContent=`${f.name}${segN?` ・ ${segN}セグメント`:''}`;
+          $('docPreviewBtn').style.display=''; $('docDlBtn').style.display='';
+          setBars('det',100); setTimeout(()=>setBars('hide'),2000);
+        }
+        else if(ev.ev==='error') throw new Error(ev.msg);
+      }
+    }
+    if(fileEv){
+      lastDoc={pairs,fileEv,name:f.name,origFile:f};
+      HISTORY.unshift({name:f.name,time:new Date(),timeStr:new Date().toLocaleTimeString('ja-JP',{hour:'2-digit',minute:'2-digit'}),ext,pairs,fileEv,origFile:f});
+      if(HISTORY.length>20) HISTORY.pop();
+      renderHistory();
+      showPostPreview(pairs,fileEv,f.name,f);
+    }
+  }catch(err){
+    setBars('hide');
+    if(pdlg.open) $('pdlgMeta').textContent='エラー: '+err.message;
+    flash('エラー: '+err.message,'err');
+  }
+  finally{ setBusy(false); }
+}
+async function downloadUrl(url,name){
+  // 成果物は /data/out に2時間保持。期限切れ(404)はトーストで分かるようにする
+  try{ const r=await fetch(url,{method:'HEAD'}); if(!r.ok) throw new Error('HTTP '+r.status); }
+  catch(e){ flash('成果物の有効期限切れ（公開2時間超過）のためダウンロードできません','err'); return; }
+  const a=document.createElement('a'); a.href=url; a.download=name;
+  document.body.appendChild(a); a.click(); a.remove();
+}
+function downloadDocOut(){ if(lastDoc) downloadUrl(lastDoc.fileEv.url,lastDoc.fileEv.name); }
+function reShowPreview(){ if(lastDoc) showPostPreview(lastDoc.pairs,lastDoc.fileEv,lastDoc.name,lastDoc.origFile); }
+
+// ---- 翻訳履歴（セッション内・DOM生成は textContent のみ） ----
+function renderHistory(){
+  const box=$('histList'); box.textContent='';
+  $('histWrap').style.display = HISTORY.length ? '' : 'none';
+  for(const h of HISTORY){
+    const row=document.createElement('div'); row.className='hrow';
+    const nm=document.createElement('span'); nm.className='h-name'; nm.textContent=h.name;
+    const meta=document.createElement('span'); meta.className='h-meta';
+    meta.textContent=`${h.timeStr} ・ ${h.pairs.length ? `${h.pairs.length} セグメント` : (h.ext==='pdf'?'PDF（ページ画像）':'完了')}`;
+    const pv=document.createElement('button'); pv.textContent='プレビュー';
+    pv.onclick=()=>showPostPreview(h.pairs,h.fileEv,h.name,h.origFile);
+    const dl=document.createElement('button'); dl.textContent='ダウンロード'; dl.className='primary';
+    dl.onclick=()=>downloadUrl(h.fileEv.url,h.fileEv.name);
+    row.append(nm,meta,pv,dl); box.append(row);
+  }
+}
+
+// ---- プレビューモーダル（textContent のみで描画し HTML インジェクションを防止） ----
+const pdlg=$('pdlg'), pdlgBody=$('pdlgBody');
+const PREVIEW_MAX=200;
+
+// ---- 「文字｜見た目」タブ（見た目=サーバー側レンダリング、開いた時だけ遅延変換） ----
+let pvCtx=null; // {mode:'pre'|'post', file?, origFile?, fileEv?, visOrig, visOut, visualDone}
+function showPView(which){
+  $('ptText').classList.toggle('on',which==='text');
+  $('ptVisual').classList.toggle('on',which==='visual');
+  $('pdlgBody').style.display = which==='text' ? '' : 'none';
+  $('pdlgVisual').style.display = which==='visual' ? '' : 'none';
+  if(which==='visual' && pvCtx && !pvCtx.visualDone) loadVisual();
+}
+function tokenFromUrl(url){ const m=(url||'').match(/file-out\/([^?]+)/); return m?m[1]:''; }
+async function fetchRenderFile(f){
+  const fd=new FormData(); fd.append('file',f);
+  const res=await fetch('api/render-preview',{method:'POST',body:fd});
+  if(!res.ok){ const j=await res.json().catch(()=>({})); throw new Error(j.detail||('HTTP '+res.status)); }
+  return res.json();
+}
+async function fetchRenderToken(token){
+  const fd=new FormData(); fd.append('token',token);
+  const res=await fetch('api/render-output',{method:'POST',body:fd});
+  if(!res.ok){ const j=await res.json().catch(()=>({})); throw new Error(j.detail||('HTTP '+res.status)); }
+  return res.json();
+}
+function visualNode(res){
+  const wrap=document.createElement('div');
+  if(res.via==='images'){
+    wrap.className='vsingle';
+    for(const u of res.pages){
+      const img=document.createElement('img'); img.src=u; img.loading='lazy'; img.alt='ページ画像';
+      wrap.append(img);
+    }
+    if(res.omitted){
+      const n=document.createElement('div'); n.className='vnote';
+      n.textContent=`全 ${res.total} ページ中 ${res.pages.length} ページまで表示（以降 ${res.omitted} ページは省略）`;
+      wrap.append(n);
+    }
+  } else if(res.via==='iframe-html'){
+    const ifr=document.createElement('iframe'); ifr.className='viframe';
+    ifr.setAttribute('sandbox',''); ifr.srcdoc=res.html;
+    wrap.append(ifr);
+  } else {
+    const pre=document.createElement('pre'); pre.className='vpre'; pre.textContent=res.text||'';
+    wrap.append(pre);
+  }
+  return wrap;
+}
+function visualCol(label,res){
+  const col=document.createElement('div'); col.className='vcol';
+  const h=document.createElement('h4'); h.textContent=label; col.append(h);
+  if(!res){ const n=document.createElement('div'); n.className='vnote'; n.textContent='（表示できません）'; col.append(n); return col; }
+  col.append(visualNode(res));
+  return col;
+}
+// ---- 見た目プレビューのズーム（vsingle/vduo ラッパの width % 制御・2カラムは連動） ----
+let vzPct=100;
+const VZ_STEPS=[50,75,100,110,125,150,175,200,250,300,400];
+function applyZoom(){
+  const box=$('pdlgVisual');
+  box.querySelectorAll(':scope > .vsingle, :scope > .vduo').forEach(el=>{ el.style.width=vzPct+'%'; });
+  const pct=$('vzPct'); if(pct) pct.textContent=vzPct+'%';
+  const tg=$('vzToggle'); if(tg) tg.textContent = vzPct>100 ? '拡大解除' : '拡大';
+}
+function zoomStep(d){
+  const i=VZ_STEPS.indexOf(vzPct), j=Math.min(VZ_STEPS.length-1,Math.max(0,(i<0?2:i)+d));
+  vzPct=VZ_STEPS[j]; applyZoom();
+}
+function zoomBar(){
+  const d=document.createElement('div'); d.className='vzoom';
+  const minus=document.createElement('button'); minus.id='vzMinus'; minus.textContent='－'; minus.title='縮小'; minus.onclick=()=>zoomStep(-1);
+  const pct=document.createElement('span'); pct.className='vz-pct'; pct.id='vzPct'; pct.textContent=vzPct+'%';
+  const plus=document.createElement('button'); plus.id='vzPlus'; plus.textContent='＋'; plus.title='拡大'; plus.onclick=()=>zoomStep(1);
+  const tg=document.createElement('button'); tg.id='vzToggle'; tg.textContent='拡大';
+  tg.onclick=()=>{ vzPct = vzPct>100 ? 100 : 200; applyZoom(); };
+  const note=document.createElement('span'); note.className='vz-note'; note.textContent='Ctrl+ホイールでも拡大縮小';
+  d.append(minus,pct,plus,tg,note);
+  return d;
+}
+$('pdlgVisual').addEventListener('wheel',e=>{
+  if(!e.ctrlKey) return;
+  if(!$('pdlgVisual').querySelector('img')) return;
+  e.preventDefault(); zoomStep(e.deltaY<0 ? 1 : -1);
+},{passive:false});
+
+async function loadVisual(){
+  const box=$('pdlgVisual');
+  box.textContent=''; vzPct=100;
+  const ld=document.createElement('div'); ld.className='vload';
+  const sp=document.createElement('span'); sp.className='spinner on';
+  ld.append(sp, Object.assign(document.createElement('span'),{textContent:'見た目プレビューをレンダリング中…'}));
+  box.append(ld);
+  try{
+    if(pvCtx.mode==='pre'){
+      if(!pvCtx.visOrig) pvCtx.visOrig=await fetchRenderFile(pvCtx.file);
+      box.textContent=''; box.append(visualNode(pvCtx.visOrig));
+    } else {
+      const origP = pvCtx.visOrig ? Promise.resolve(pvCtx.visOrig)
+        : (pvCtx.origFile ? fetchRenderFile(pvCtx.origFile) : Promise.resolve(null));
+      const outP = pvCtx.visOut ? Promise.resolve(pvCtx.visOut)
+        : fetchRenderToken(tokenFromUrl(pvCtx.fileEv.url));
+      const [a,b]=await Promise.all([origP,outP]);
+      pvCtx.visOrig=a; pvCtx.visOut=b;
+      box.textContent='';
+      const duo=document.createElement('div'); duo.className='vduo';
+      duo.append(visualCol('原文',a),visualCol('訳文',b));
+      box.append(duo);
+    }
+    if(box.querySelector('img')) box.prepend(zoomBar());
+    pvCtx.visualDone=true;
+  }catch(e){
+    box.textContent='';
+    const n=document.createElement('div'); n.className='vnote';
+    n.textContent=`⚠ 見た目プレビューをレンダリングできませんでした: ${e.message}（「文字」タブでテキストを確認できます）`;
+    box.append(n);
+    flash('見た目プレビュー失敗: '+e.message,'err');
+  }
+}
+
+function showPrePreview(f,d){
+  pdlgBody.textContent='';
+  pvCtx={mode:'pre',file:f,visOrig:null,visOut:null,visualDone:false};
+  showPView('text');
+  $('pdlgTitle').textContent='翻訳前プレビュー';
+  $('pdlgMeta').textContent=`${d.name} ・ 抽出セグメント ${d.count} 件（番号付き）`;
+  const frag=document.createDocumentFragment();
+  const addRows=(from,to)=>{
+    for(let i=from;i<to;i++){
+      const row=document.createElement('div'); row.className='prow';
+      const num=document.createElement('span'); num.className='pnum'; num.textContent=i+1;
+      const tx=document.createElement('span'); tx.className='ptext'; tx.textContent=d.segments[i];
+      row.append(num,tx); frag.append(row);
+    }
+  };
+  const n=Math.min(d.count,PREVIEW_MAX);
+  addRows(0,n);
+  if(d.count>n){
+    const moreBtn=document.createElement('button'); moreBtn.className='pmore';
+    moreBtn.textContent=`残り ${d.count-n} 件を表示（全 ${d.count} 件）`;
+    moreBtn.onclick=()=>{ addRows(n,d.count); moreBtn.remove(); };
+    frag.append(moreBtn);
+  }
+  pdlgBody.append(frag);
+  $('pdlgDl').style.display='none';
+  $('pdlgGo').style.display=''; $('pdlgGo').textContent='翻訳開始';
+  $('pdlgGo').onclick=()=>beginTranslateFromModal(f);
+  $('pdlgCancel').textContent='キャンセル'; $('pdlgCancel').onclick=()=>pdlg.close();
+  pdlg.showModal();
+}
+
+function showPostPreview(pairs,fileEv,fileName,origFile){
+  pdlgBody.textContent='';
+  // 翻訳前モーダルで見た目を表示済みなら原文レンダリングを再利用（File 同一参照のときのみ）
+  const reuse = pvCtx && pvCtx.mode==='pre' && pvCtx.file===origFile ? pvCtx.visOrig : null;
+  pvCtx={mode:'post',origFile:origFile||null,fileEv,visOrig:reuse,visOut:null,visualDone:false};
+  // PDF（text pairs なし）は対照できないので見た目タブを既定表示
+  showPView(pairs.length ? 'text' : 'visual');
+  $('pdlgTitle').textContent='翻訳後プレビュー';
+  const seen=new Set();
+  const frag=document.createDocumentFragment();
+  for(const p of pairs){
+    const idx=p[0], src=p[1], dst=p[2];
+    if(seen.has(idx)) continue; seen.add(idx);
+    const row=document.createElement('div'); row.className='pair';
+    row.append(mkPairCol(idx,'原文',src),mkPairCol(idx,'訳文',dst));
+    frag.append(row);
+  }
+  if(!pairs.length){
+    const n=document.createElement('div'); n.className='vnote';
+    n.textContent='PDF にはテキストセグメント対照がありません。「見た目」タブで原文 ⇄ 訳文のページ画像を確認してください';
+    frag.append(n);
+  }
+  pdlgBody.append(frag);
+  $('pdlgMeta').textContent=pairs.length
+    ? `${fileName} ・ ${seen.size} セグメント（原文 ⇄ 訳文・行にマウスを乗せると対応箇所をハイライト）`
+    : `${fileName} ・ 翻訳完了`;
+  $('pdlgGo').style.display='none';
+  $('pdlgDl').style.display=''; $('pdlgDl').textContent='ダウンロード';
+  $('pdlgDl').onclick=()=>{ const a=document.createElement('a'); a.href=fileEv.url; a.download=fileEv.name; document.body.appendChild(a); a.click(); a.remove(); };
+  $('pdlgCancel').textContent='閉じる'; $('pdlgCancel').onclick=()=>pdlg.close();
+  if(!pdlg.open) pdlg.showModal(); // 翻訳開始で開いたままの場合、再showModalはInvalidStateErrorになる
+}
+
+function mkPairCol(idx,label,text){
+  const col=document.createElement('div'); col.className='col'; col.dataset.idx=idx;
+  const num=document.createElement('span'); num.className='pnum'; num.textContent=idx+1;
+  const lab=document.createElement('span'); lab.className='plab'; lab.textContent=label;
+  const tx=document.createElement('span'); tx.className='ptext'; tx.textContent=text||'（未翻訳）';
+  col.append(num,lab,tx);
+  return col;
+}
+
+// hover ハイライト: 同じ data-idx を持つ要素（原文/訳文の両方向）に .hl を付与
+function bindPairHover(container){
+  const setHl=(idx,on)=>{ container.querySelectorAll(`[data-idx="${idx}"]`).forEach(el=>el.classList.toggle('hl',on)); };
+  container.addEventListener('mouseover',e=>{
+    const el=e.target.closest('[data-idx]'); if(el&&container.contains(el)) setHl(el.dataset.idx,true);
+  });
+  container.addEventListener('mouseout',e=>{
+    const el=e.target.closest('[data-idx]'); if(el&&container.contains(el)) setHl(el.dataset.idx,false);
+  });
+}
+bindPairHover(pdlgBody);
+function clearSegView(){
+  segChunks=null; segOut=null;
+  $('segView').classList.remove('on'); $('dst').style.display='';
+  $('segRows').textContent=''; $('segBtn').style.display='none';
+}
+function clearAll(){
+  $('src').value=''; $('dst').value=''; $('srcInfo').textContent=''; currentFile=null;
+  clearSegView(); $('src').dispatchEvent(new Event('input'));
+}
+function copyOut(){ navigator.clipboard.writeText($('dst').value); flash('コピーしました'); }
+function downloadOut(){
+  const t=$('dst').value; if(!t) return;
+  const name=currentFile ? currentFile.replace(/(\.[^.]+)$/,'_訳$1') : 'translation.txt';
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([t],{type:'text/plain;charset=utf-8'}));
+  a.download=name; a.click();
+}
+function flash(msg,cls){
+  if(curTab==='doc'){ const s=$('docSt'); s.textContent=msg; s.className='dj-status '+(cls||''); $('docJob').style.display=''; return; }
+  const s=$('st'); s.textContent=msg; s.className='status '+(cls||'');
+}
+$('src').addEventListener('keydown',e=>{ if((e.ctrlKey||e.metaKey)&&e.key==='Enter'){ e.preventDefault(); doTranslate(); } });
+
+async function doTranslate(){
+  const text=$('src').value.trim();
+  if(!text){ flash('原文を入力してください','err'); return; }
+  $('go').disabled=true; $('dst').value=''; $('retry').style.display='none'; $('spin').classList.add('on');
+  clearSegView();
+  const gname=$('glossary').value;
+  const body={
+    text, target_lang:$('target').value, source_lang:$('source').value||undefined,
+    form: $('target').value==='ja'? form: undefined,
+    model: $('model').value||undefined,
+    glossary: gname? glossaries[gname]: undefined
+  };
+  const t0=Date.now();
+  try{
+    const res=await fetch('api/translate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+    if(!res.ok){ const j=await res.json().catch(()=>({})); throw new Error(j.detail||('HTTP '+res.status)); }
+    const reader=res.body.getReader(), dec=new TextDecoder();
+    let buf='', total=0, doneN=0, out='';
+    while(true){
+      const {value,done}=await reader.read(); if(done) break;
+      buf+=dec.decode(value,{stream:true});
+      let nl;
+      while((nl=buf.indexOf('\n'))>=0){
+        const line=buf.slice(0,nl).trim(); buf=buf.slice(nl+1);
+        if(!line) continue;
+        const ev=JSON.parse(line);
+        if(ev.ev==='start'){
+          total=ev.chunks; segChunks=Array.isArray(ev.texts)? ev.texts:null; segOut=new Array(total).fill(null);
+          flash(`翻訳中 0/${total}…`);
+        }
+        else if(ev.ev==='chunk'){ doneN++; segOut[ev.i]=ev.text; out+=(out?'\n\n':'')+ev.text; $('dst').value=out; $('dst').scrollTop=$('dst').scrollHeight; flash(`翻訳中 ${doneN}/${total}…`); }
+        else if(ev.ev==='error'){ throw new Error(ev.msg); }
+        else if(ev.ev==='done'){
+          const sec=((Date.now()-t0)/1000).toFixed(1);
+          flash(`完了（${sec}秒・${total}チャンク）`,'ok');
+          if(segChunks) buildSegView();
+        }
+      }
+    }
+  }catch(e){ flash('エラー: '+e.message,'err'); $('retry').style.display=''; }
+  finally{ $('go').disabled=false; $('spin').classList.remove('on'); }
+}
+
+// ---- セグメント対照ビュー（テキスト翻訳: チャンク単位の原文 ⇄ 訳文） ----
+let segChunks=null, segOut=null;
+function buildSegView(){
+  if(!segChunks||!segOut) return;
+  const rows=$('segRows'); rows.textContent='';
+  const frag=document.createDocumentFragment();
+  segChunks.forEach((src,i)=>{
+    const row=document.createElement('div'); row.className='segrow';
+    row.append(mkSegCell(i,'src','原文',src),mkSegCell(i,'tgt','訳文',segOut[i]||'（未翻訳）'));
+    frag.append(row);
+  });
+  rows.append(frag);
+  $('segBtn').style.display='';
+  if(!$('segView').classList.contains('on')) toggleSegView(); // 翻訳完了時に自動で開く
+}
+function mkSegCell(idx,kind,label,text){
+  const cell=document.createElement('div'); cell.className=`cell ${kind}`;
+  cell.dataset.idx=idx;
+  const lab=document.createElement('span'); lab.className='slab'; lab.textContent=label;
+  const tx=document.createElement('span'); tx.className='stext'; tx.textContent=text;
+  cell.append(lab,tx);
+  return cell;
+}
+function toggleSegView(){
+  const on=$('segView').classList.toggle('on');
+  $('dst').style.display=on?'none':'';
+}
+bindPairHover($('segView'));
+
+// ---- glossary dialog ----
+const gdlg=$('gdlg');
+function openGlossary(){ renderGList(); gdlg.showModal(); }
+function renderGList(sel){
+  $('glist').innerHTML=Object.keys(glossaries).map(k=>
+    `<span class="chip ${k===sel?'on':''}" onclick="pickG('${k.replace(/'/g,"\\'")}')">${k}（${glossaries[k].length}語）</span>`).join('')||'<span style="color:var(--sub);font-size:.8rem">用語集なし</span>';
+}
+function pickG(k){
+  $('gname').value=k;
+  $('gtext').value=glossaries[k].map(e=>`${e.src} => ${e.dst}`).join('\n');
+  renderGList(k);
+}
+async function saveGlossary(){
+  const name=$('gname').value.trim(); if(!name){ alert('用語集名を入力'); return; }
+  const entries=$('gtext').value.split('\n').filter(l=>l.trim()).map(l=>{
+    const [src,dst]=l.split('=>'); return {src:(src||'').trim(),dst:(dst||'').trim()};
+  });
+  await fetch('api/glossaries',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({name,entries})});
+  await loadGlossaries(); $('glossary').value=name; renderGList(name); flash('用語集を保存しました','ok');
+}
+async function deleteGlossary(){
+  const name=$('gname').value.trim(); if(!name) return;
+  if(!confirm(`用語集「${name}」を削除しますか？`)) return;
+  await fetch('api/glossaries/'+encodeURIComponent(name),{method:'DELETE'});
+  $('gname').value=''; $('gtext').value='';
+  await loadGlossaries(); renderGList();
+}
+$('formWrap').style.display='none'; // target=en のため初期非表示
+// ---- レイアウト切替: デスクトップは本家PLaMo翻訳風（言語=各ペインヘッダ、スワップ=中央円形、翻訳=訳元ヘッダ右）
+// 文書翻訳タブ激活時は言語セレクト群を #docLangRow へ移す（単一DOM方式維持、go は viewText 内なので自動的に非表示）
+const mqDesk=matchMedia('(min-width:761px)');
+function layoutLangs(){
+  if(mqDesk.matches){
+    if(curTab==='doc'){
+      $('docLangRow').append($('fSrc'),$('swapBtn'),$('fTgt')); $('goSlot').append($('go'));
+    }else{
+      $('srcLangSlot').append($('fSrc')); $('goSlot').append($('go'));
+      $('tgtLangSlot').append($('fTgt')); $('panes').append($('swapBtn'));
+    }
+  }else{
+    $('langSlot').append($('fSrc'),$('swapBtn'),$('fTgt')); $('srcFoot').append($('go'));
+  }
+}
+
+// ---- タブ切替（テキスト翻訳 / 文書翻訳）: display 切替のみ、localStorage に保持 ----
+let curTab='text';
+try{ if(localStorage.getItem('plamo-tab')==='doc') curTab='doc'; }catch(e){}
+function showTab(t){
+  curTab=t;
+  try{ localStorage.setItem('plamo-tab',t); }catch(e){}
+  $('tabText').classList.toggle('on',t==='text'); $('tabText').setAttribute('aria-selected',t==='text');
+  $('tabDoc').classList.toggle('on',t==='doc'); $('tabDoc').setAttribute('aria-selected',t==='doc');
+  $('viewText').style.display = t==='text' ? '' : 'none';
+  $('viewDoc').style.display = t==='doc' ? '' : 'none';
+  $('fileBtn').style.display = t==='text' ? '' : 'none'; // ファイル読込はテキスト翻訳タブの機能
+  layoutLangs();
+}
+layoutLangs(); mqDesk.addEventListener('change',layoutLangs);
+showTab(curTab);
+// モバイルでは「その他設定」を折りたたんで開く（デスクトップは常時展開）
+(()=>{const mq=matchMedia('(max-width:760px)');const more=document.querySelector('.more');
+const sync=()=>{ if(mq.matches) more.removeAttribute('open'); else more.setAttribute('open',''); };
+sync(); mq.addEventListener('change',sync);})();
+</script>
+</body>
+</html>
