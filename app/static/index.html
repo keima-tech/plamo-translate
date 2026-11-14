@@ -160,22 +160,17 @@ dialog textarea{flex:1;min-height:240px;font-size:.9rem;resize:none}
 .hrow .h-name{font-weight:600;font-size:.85rem;word-break:break-all;flex:1;min-width:0}
 .hrow .h-meta{font-size:.72rem;color:var(--sub);font-variant-numeric:tabular-nums}
 .hrow button{font-size:.75rem;padding:.25rem .6rem}
-/* ---- セグメント対照ビュー（テキスト翻訳・訳文ペイン内切替） ---- */
-#segView{display:none;flex-direction:column;flex:1;min-height:0}
-#segView.on{display:flex}
-.seghead{display:flex;justify-content:space-between;align-items:center;gap:.5rem;padding:.4rem .8rem;border-top:1px solid var(--line);border-bottom:1px solid var(--line);font-size:.78rem;color:var(--sub);font-weight:600;background:var(--chip)}
-.seghead button{padding:.15rem .5rem;font-size:.72rem}
-.segcols{display:grid;grid-template-columns:1fr 1fr;font-size:.7rem;color:var(--sub);padding:.2rem .8rem;border-bottom:1px solid var(--line)}
-#segRows{flex:1;overflow:auto;min-height:0}
-.segrow{display:grid;grid-template-columns:1fr 1fr;border-bottom:1px solid var(--line)}
-.segrow:last-child{border-bottom:0}
-.segrow .cell{padding:.35rem .6rem;font-size:.8rem;line-height:1.55;white-space:pre-wrap;word-break:break-word;min-width:0;display:flex;gap:.4rem;align-items:flex-start}
-.segrow .cell .slab{font-size:.64rem;font-weight:700;color:var(--acc);flex-shrink:0;padding-top:.15rem}
-.segrow .cell .stext{flex:1;min-width:0}
-.segrow .cell.src{background:var(--src-tint)}
-.segrow .cell.tgt{background:var(--tgt-tint)}
-.segrow .cell.hl,.segrow .cell:hover{background:var(--hl-bg);box-shadow:inset 3px 0 0 var(--hl-border)}
-@media (max-width:760px){.segrow{grid-template-columns:1fr}.segcols{display:none}}
+/* ---- セグメント対照ダイアログ（テキスト翻訳・文単位対照） ---- */
+#segdlg{max-width:920px;resize:both;overflow:hidden;min-width:min(360px,94vw);max-height:94vh}
+/* 上限高で flex shrink により見出し・メタ行・フッタが潰れないようにする（pdlg も同様） */
+#segdlg h3,#segdlg .pmeta,#segdlg .foot,#pdlg h3,#pdlg .pmeta,#pdlg .foot{flex-shrink:0}
+#segBody .ptext{line-height:1.6}
+/* 原文/訳文の列を薄い色で仕切る（hover ハイライトは .pair 側の --hl-bg が勝つ） */
+.segpair{background:linear-gradient(90deg,var(--src-tint) 50%,var(--tgt-tint) 50%)}
+@media (max-width:760px){.segpair{background:none}}
+/* チャンク境界: 細い区切り線 + ラベル */
+.segchunk{display:flex;align-items:center;gap:.6rem;font-size:.7rem;color:var(--sub);font-weight:700;margin:.65rem .2rem .25rem}
+.segchunk::before,.segchunk::after{content:"";flex:1;border-top:1px solid var(--line)}
 /* ---- タブ（テキスト翻訳 / 文書翻訳） ---- */
 .tabs{display:flex;gap:.25rem;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:.25rem;margin-bottom:.9rem}
 .tabs button{flex:1;border:0;background:transparent;color:var(--sub);padding:.5rem .8rem;font-size:.9rem;font-weight:600;border-radius:9px;cursor:pointer}
@@ -255,14 +250,9 @@ a{color:var(--acc)}
     <div class="pane pane-tgt">
       <div class="head"><span>訳文</span><span class="langslot" id="tgtLangSlot"></span><span style="flex:1"></span><span class="spinner" id="spin"></span><span class="status" id="st" aria-live="polite"></span></div>
       <textarea id="dst" readonly placeholder="翻訳結果がここに表示されます"></textarea>
-      <div id="segView" aria-label="セグメント対照ビュー">
-        <div class="seghead"><span>セグメント対照（チャンク単位・原文 ⇄ 訳文）</span><button onclick="toggleSegView()">閉じる</button></div>
-        <div class="segcols"><span>原文（チャンク）</span><span>訳文（チャンク）</span></div>
-        <div id="segRows"></div>
-      </div>
       <div class="foot">
         <span style="flex:1"></span>
-        <button id="segBtn" style="display:none" onclick="toggleSegView()" title="原文と訳文のチャンク対照を表示">セグメント</button>
+        <button id="segBtn" style="display:none" onclick="buildSegView()" title="原文と訳文の文単位対照を表示">対照ビュー</button>
         <button onclick="copyOut()">コピー</button>
         <button onclick="downloadOut()">ダウンロード</button>
         <button id="retry" style="display:none" onclick="doTranslate()">再試行</button>
@@ -345,6 +335,17 @@ a{color:var(--acc)}
     <span style="flex:1"></span>
     <button id="pdlgCancel">キャンセル</button>
     <button id="pdlgGo" class="primary" style="display:none">翻訳開始</button>
+  </div>
+</dialog>
+
+<dialog id="segdlg">
+  <h3>セグメント対照（文単位・原文 ⇄ 訳文）</h3>
+  <div class="pmeta" id="segMeta"></div>
+  <div class="pscroll" id="segBody"></div>
+  <div class="foot" style="border-top:0">
+    <span class="vnote" style="padding:0">文単位の対応付けは表示上のヒューリスティックです（文数が合わないチャンクはチャンク単位で表示）</span>
+    <span style="flex:1"></span>
+    <button onclick="segdlg.close()">閉じる</button>
   </div>
 </dialog>
 
@@ -468,7 +469,7 @@ async function clearApiKey(){
 $('src').addEventListener('input',()=>{
   const n=$('src').value.length;
   $('srcCount').textContent = `${n} 文字`;
-  // 原文を編集したらチャンク対応が崩れるため対照ビューはクリア
+  // 原文を編集したら文・チャンクの対応が崩れるため対照ビューはクリア
   if($('segBtn').style.display!=='none') clearSegView();
 });
 
@@ -900,8 +901,9 @@ function bindPairHover(container){
 bindPairHover(pdlgBody);
 function clearSegView(){
   segChunks=null; segOut=null;
-  $('segView').classList.remove('on'); $('dst').style.display='';
-  $('segRows').textContent=''; $('segBtn').style.display='none';
+  $('segBody').textContent=''; $('segMeta').textContent='';
+  $('segBtn').style.display='none';
+  if(segdlg.open) segdlg.close();
 }
 function clearAll(){
   $('src').value=''; $('dst').value=''; $('srcInfo').textContent=''; currentFile=null;
@@ -964,34 +966,93 @@ async function doTranslate(){
   finally{ $('go').disabled=false; $('spin').classList.remove('on'); }
 }
 
-// ---- セグメント対照ビュー（テキスト翻訳: チャンク単位の原文 ⇄ 訳文） ----
+// ---- セグメント対照ビュー（テキスト翻訳: 文単位の原文 ⇄ 訳文・表示専用の簡易ヒューリスティック） ----
 let segChunks=null, segOut=null;
+const segdlg=$('segdlg');
+const langName=c=>{const f=LANGS.find(x=>x[0]===c);return f?f[1]:c;};
+
+// 文分割（表示専用・簡易）: 改行を最優先の段落区切りとし、
+// 日本語は 。！？＋直後の閉じ括弧・引用符の連続の後で切る（次が開き括弧・引用符なら文の途中とみなす）、
+// 英語等は .!? + 空白 + 大文字・引用符・開き括弧の手前で切る
+function splitSentences(text,lang){
+  const out=[];
+  for(const para of String(text||'').split(/\n+/)){
+    const p=para.trim(); if(!p) continue;
+    const jp=lang==='ja'||(!lang&&p.includes('。'));
+    const parts=jp
+      ? p.split(/(?<=[。！？][」』）〕〉》】”’"']*)(?![」』）〕〉》】”’"'])(?![「『（〈《［【“‘"'])/)
+      : p.split(/(?<=[.!?])\s+(?=[A-Z"'“‘(\[])/);
+    for(const s of parts){ if(s.trim()) out.push(s); }
+  }
+  return out;
+}
+
+// チャンク内の文アライメント（表示専用）: 文数が一致すれば 1:1。
+// 不一致なら累積文字数の比率差が最小になる地点でペアを確定する貪欲法
+// （1ブロック最大4文程度・余りは最後のペアに吸収）。
+// どちらかの文列が空なら null を返し、呼び出し側でチャンク1行表示にフォールバック
+function alignSentBlocks(srcs,tgts){
+  const n=srcs.length, m=tgts.length;
+  if(!n||!m) return null;
+  if(n===m) return srcs.map((s,i)=>[[s],[tgts[i]]]);
+  const totalS=Math.max(1,srcs.reduce((a,s)=>a+s.length,0));
+  const totalT=Math.max(1,tgts.reduce((a,s)=>a+s.length,0));
+  const out=[]; let i=0,j=0,cS=0,cT=0;
+  while(i<n&&j<m){
+    const bS=[],bT=[];
+    while(true){
+      const canS=i<n&&bS.length<4, canT=j<m&&bT.length<4;
+      if(!canS&&!canT) break;
+      const cur=Math.abs(cS/totalS-cT/totalT);
+      const dS=canS?Math.abs((cS+srcs[i].length)/totalS-cT/totalT):Infinity;
+      const dT=canT?Math.abs(cS/totalS-(cT+tgts[j].length)/totalT):Infinity;
+      if(bS.length&&bT.length&&dS>=cur&&dT>=cur) break; // どちらに足しても悪化 → ペア確定
+      if(dS<=dT){ bS.push(srcs[i]); cS+=srcs[i].length; i++; }
+      else{ bT.push(tgts[j]); cT+=tgts[j].length; j++; }
+    }
+    out.push([bS,bT]);
+  }
+  if(i<n||j<m){
+    if(!out.length) out.push([[],[]]);
+    const last=out[out.length-1];
+    while(i<n) last[0].push(srcs[i++]);
+    while(j<m) last[1].push(tgts[j++]);
+  }
+  return out;
+}
+
 function buildSegView(){
   if(!segChunks||!segOut) return;
-  const rows=$('segRows'); rows.textContent='';
+  const srcText=$('src').value||'';
+  const srcLang=$('source').value||(srcText.includes('。')?'ja':'');
+  const tgtLang=$('target').value||'en';
+  const body=$('segBody'); body.textContent='';
   const frag=document.createDocumentFragment();
-  segChunks.forEach((src,i)=>{
-    const row=document.createElement('div'); row.className='segrow';
-    row.append(mkSegCell(i,'src','原文',src),mkSegCell(i,'tgt','訳文',segOut[i]||'（未翻訳）'));
-    frag.append(row);
+  let pairN=0, fbChunks=0;
+  segChunks.forEach((src,ci)=>{
+    const head=document.createElement('div'); head.className='segchunk'; head.textContent=`チャンク ${ci+1}`;
+    frag.append(head);
+    const blocks=alignSentBlocks(splitSentences(src,srcLang),splitSentences(segOut[ci]||'',tgtLang));
+    if(!blocks){ // 文が取り出せないチャンクは従来どおりチャンク1行で表示
+      fbChunks++;
+      frag.append(mkSegPair([[src||'（原文なし）'],[segOut[ci]||'（未翻訳）']],pairN++));
+      return;
+    }
+    for(const b of blocks) frag.append(mkSegPair(b,pairN++));
   });
-  rows.append(frag);
+  body.append(frag);
+  const langLabel=`${srcLang?langName(srcLang):'自動判定'} → ${langName(tgtLang)}`;
+  $('segMeta').textContent=`${langLabel} ・ ${pairN} 文ペア / ${segChunks.length} チャンク`+
+    (fbChunks?` ・ ${fbChunks} チャンクは文数が合わずチャンク単位で表示`:'');
   $('segBtn').style.display='';
-  if(!$('segView').classList.contains('on')) toggleSegView(); // 翻訳完了時に自動で開く
+  if(!segdlg.open) segdlg.showModal(); // 翻訳完了時に自動で開く
 }
-function mkSegCell(idx,kind,label,text){
-  const cell=document.createElement('div'); cell.className=`cell ${kind}`;
-  cell.dataset.idx=idx;
-  const lab=document.createElement('span'); lab.className='slab'; lab.textContent=label;
-  const tx=document.createElement('span'); tx.className='stext'; tx.textContent=text;
-  cell.append(lab,tx);
-  return cell;
+function mkSegPair(block,idx){
+  const row=document.createElement('div'); row.className='pair segpair';
+  row.append(mkPairCol(idx,'原文',block[0].join('\n')),mkPairCol(idx,'訳文',block[1].join('\n')));
+  return row;
 }
-function toggleSegView(){
-  const on=$('segView').classList.toggle('on');
-  $('dst').style.display=on?'none':'';
-}
-bindPairHover($('segView'));
+bindPairHover($('segBody'));
 
 // ---- glossary dialog ----
 const gdlg=$('gdlg');
