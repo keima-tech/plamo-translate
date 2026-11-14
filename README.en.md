@@ -12,7 +12,7 @@ Its main focus is **layout-preserving document translation with a DeepL-style UI
 ## Features
 | Area | Details |
 |---|---|
-| Text translation | 53 languages, HTML/Markdown tag preservation, chunked streaming for long inputs, chunk-level original ⇄ translation comparison |
+| Text translation | 53 languages, HTML/Markdown tag preservation, chunked streaming for long inputs, sentence-level original ⇄ translation comparison in a full-width modal (bidirectional hover highlight) |
 | Document translation | `.docx` / `.pptx` / `.xlsx` written back in-place preserving styles; `.pdf` via [BabelDOC](https://github.com/funstory-ai/BabelDOC) with layout preservation; `.md` / `.html` / `.txt` with delimiter-preserving reassembly |
 | Visual preview | Before/after page-image comparison (LibreOffice + poppler) with zoom; pre-translation preview of extracted segments or PDF pages |
 | Glossary | Multiple named glossaries, honorific/plain style control for Japanese output, language swap |
@@ -161,5 +161,5 @@ CI (GitHub Actions) runs these tests on every push/PR. The Docker image build is
 ## Known limitations
 - Scanned-image PDFs are not OCR'd (text-based PDFs only)
 - LibreOffice-based visual previews may differ slightly from the original renderer
-- Comparison views are chunk/segment granularity, not sentence
+- Sentence alignment in the text-translation comparison view is a display-only heuristic (chunks with mismatched sentence counts fall back to chunk-level rows; translation itself still runs per chunk). Document-translation comparison remains per segment
 - Translation outputs are kept for 2 hours, then auto-deleted
