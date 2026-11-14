@@ -24,7 +24,7 @@ Its main focus is **layout-preserving document translation with a DeepL-style UI
 
 | Text translation | Post-translation segment pairs |
 |---|---|
-| ![Text translation](docs/screenshots/01-text-translate.png) | ![Segment pairs](docs/screenshots/02-post-preview-pairs.png) |
+| ![Text translation](docs/screenshots/01-text-translate.png) | ![Sentence-level pairs](docs/screenshots/02-segdlg-view.png) |
 
 | Visual before/after preview | PDF pre-translation preview |
 |---|---|

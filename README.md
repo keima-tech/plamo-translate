@@ -21,7 +21,7 @@
 
 | テキスト翻訳 | 翻訳後の原文⇄訳文対照 |
 |---|---|
-| ![テキスト翻訳](docs/screenshots/01-text-translate.png) | ![対照ビュー](docs/screenshots/02-post-preview-pairs.png) |
+| ![テキスト翻訳](docs/screenshots/01-text-translate.png) | ![文単位対照ビュー](docs/screenshots/02-segdlg-view.png) |
 
 | 見た目プレビュー（翻訳前後） | PDF 翻訳前プレビュー |
 |---|---|
