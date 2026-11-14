@@ -252,7 +252,7 @@ a{color:var(--acc)}
       <textarea id="dst" readonly placeholder="翻訳結果がここに表示されます"></textarea>
       <div class="foot">
         <span style="flex:1"></span>
-        <button id="segBtn" style="display:none" onclick="buildSegView()" title="原文と訳文の文単位対照を表示">対照ビュー</button>
+        <button id="segBtn" style="display:none" onclick="buildSegView();if(!segdlg.open)segdlg.showModal()" title="原文と訳文の文単位対照を表示">対照ビュー</button>
         <button onclick="copyOut()">コピー</button>
         <button onclick="downloadOut()">ダウンロード</button>
         <button id="retry" style="display:none" onclick="doTranslate()">再試行</button>
@@ -1045,7 +1045,6 @@ function buildSegView(){
   $('segMeta').textContent=`${langLabel} ・ ${pairN} 文ペア / ${segChunks.length} チャンク`+
     (fbChunks?` ・ ${fbChunks} チャンクは文数が合わずチャンク単位で表示`:'');
   $('segBtn').style.display='';
-  if(!segdlg.open) segdlg.showModal(); // 翻訳完了時に自動で開く
 }
 function mkSegPair(block,idx){
   const row=document.createElement('div'); row.className='pair segpair';
